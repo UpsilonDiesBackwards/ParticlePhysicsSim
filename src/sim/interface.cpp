@@ -18,6 +18,16 @@ const char* GetParticleName(ParticleType type) {
     }
 }
 
+const char* GetPlayState(PlayState state) {
+    switch (state) {
+        case PlayState_PLAY:  return "PLAY";
+        case PlayState_STOP:  return "STOP";
+        case PlayState_STEP:  return "STEP";
+        case PlayState_PAUSE: return "PAUSE";
+        default:              return "UNKNOWN";
+    }
+}
+
 void Interface::Show() {
     static ParticleType selectedType = ParticleType::ParticleType_Proton;
 
@@ -48,6 +58,32 @@ void Interface::Show() {
     ImGui::Separator();
 
     ImGui::Text("Playback");
+
+    ImGui::Text("Play State: %s", GetPlayState(GET_APP.playState));
+
+    if (GET_APP.playState == PlayState_PLAY) {
+        if (ImGui::Button("Pause")) GET_APP.playState = PlayState_PAUSE;
+    } else {
+        if (ImGui::Button("Play"))  GET_APP.playState = PlayState_PLAY;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Stop")) GET_APP.playState = PlayState_STOP;
+
+    ImGui::SameLine();
+
+    bool isPaused = (GET_APP.playState == PlayState_PAUSE);
+    if (!isPaused) {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Button("Step")) {
+        GET_APP.playState = PlayState_STEP;
+    }
+    if (!isPaused) {
+        ImGui::EndDisabled();
+    }
+
     ImGui::Separator();
 
     ImGui::Text("Stats");

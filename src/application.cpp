@@ -89,6 +89,8 @@ void Application::Initialise() {
     });
 
     input.BindMouseButton(GLFW_MOUSE_BUTTON_1, MOUSE_UP, [this]() {
+        if (playState != PlayState_STOP) return;
+
         glm::vec2 worldPos = ScreenToWorld(
         inputManager.getMouseX(),
         inputManager.getMouseY()
