@@ -85,17 +85,19 @@ void Application::Initialise() {
                 inputManager.getMouseX(),
                 inputManager.getMouseY()
             };
-        } else {
-            glm::vec2 worldPos = ScreenToWorld(
-                inputManager.getMouseX(),
-                inputManager.getMouseY()
-            );
-
-            simulationSystem.CreateParticle(
-                ParticleType::ParticleType_Proton,
-                worldPos
-            );
         }
+    });
+
+    input.BindMouseButton(GLFW_MOUSE_BUTTON_1, MOUSE_UP, [this]() {
+        glm::vec2 worldPos = ScreenToWorld(
+        inputManager.getMouseX(),
+        inputManager.getMouseY()
+        );
+
+        simulationSystem.CreateParticle(
+        targetParticleType,
+        worldPos
+        );
     });
 
     input.BindKey(GLFW_KEY_LEFT_SHIFT, KEY_DOWN, [this]() {
@@ -104,6 +106,22 @@ void Application::Initialise() {
 
     input.BindKey(GLFW_KEY_LEFT_SHIFT, KEY_UP, [this]() {
         isPanning = false;
+    });
+
+    input.BindKey(GLFW_KEY_1, KEY_DOWN, [this]() {
+        targetParticleType = ParticleType::ParticleType_Proton;
+    });
+
+    input.BindKey(GLFW_KEY_2, KEY_DOWN, [this]() {
+        targetParticleType = ParticleType::ParticleType_Neutron;
+    });
+
+    input.BindKey(GLFW_KEY_3, KEY_DOWN, [this]() {
+        targetParticleType = ParticleType::ParticleType_Electron;
+    });
+
+    input.BindKey(GLFW_KEY_4, KEY_DOWN, [this]() {
+        targetParticleType = ParticleType::ParticleType_Photon;
     });
 
     input.BindScroll([this](double, double y) {
@@ -122,6 +140,8 @@ void Application::Run() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    simInterface.Show();
 
     input.Update();
 

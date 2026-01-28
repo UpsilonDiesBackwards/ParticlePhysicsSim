@@ -19,7 +19,24 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
 
     _particles.push_back(particle);
 
-    // std::cout << "Created a new particle" << std::endl;
+    switch (props.type) {
+        case ParticleType::ParticleType_Proton:
+            GET_APP.simInterface.protonCount++;
+            break;
+        case ParticleType::ParticleType_Neutron:
+            GET_APP.simInterface.neutronCount++;
+            break;
+        case ParticleType::ParticleType_Electron:
+            GET_APP.simInterface.electronCount++;
+            break;
+        case ParticleType::ParticleType_Photon:
+            GET_APP.simInterface.photonCount++;
+            break;
+    }
+
+    if (props.type == ParticleType::ParticleType_Proton) {
+
+    }
 }
 
 void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projection, const glm::mat4& view) {

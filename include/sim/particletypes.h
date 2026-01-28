@@ -11,7 +11,8 @@ enum class ParticleType {
     ParticleType_Electron,
     ParticleType_Proton,
     ParticleType_Neutron,
-    ParticleType_Photon
+    ParticleType_Photon,
+    ParticleType_NumItems
 };
 
 struct ParticleColor {

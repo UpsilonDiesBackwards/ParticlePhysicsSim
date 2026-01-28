@@ -46,6 +46,8 @@ add_executable(Simulation
         src/sim/particle.cpp
         include/sim/particle.h
         src/sim/system.cpp
+        src/sim/interface.cpp
+        include/sim/interface.h
 )
 
 target_include_directories(Simulation PUBLIC

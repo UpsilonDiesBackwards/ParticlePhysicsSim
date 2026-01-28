@@ -11,6 +11,7 @@
 #include "viewport.h"
 #include "io/input.h"
 #include "io/inputmanager.h"
+#include "sim/interface.h"
 #include "sim/system.h"
 
 enum PlayState {
@@ -51,10 +52,14 @@ public:
     Viewport* camera;
 
     Time time;
+
+    ParticleType targetParticleType = ParticleType::ParticleType_Proton;
+
+    SimulationSystem simulationSystem;
+    Interface simInterface;
 private:
     Application(int width, int height, const char* title);
 
-    SimulationSystem simulationSystem;
 
     GLFWwindow* window;
     int width, height;
