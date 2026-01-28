@@ -6,9 +6,6 @@
 #define SIMULATION_SHADER_H
 #include <string>
 #include <glm/fwd.hpp>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-
 
 class Shader {
 public:

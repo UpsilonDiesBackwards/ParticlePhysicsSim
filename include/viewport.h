@@ -21,6 +21,10 @@ public:
     glm::vec2 GetPosition() const;
 
     float GetZoom() const;
+
+    float GetWidth()  const { return width; }
+    float GetHeight() const { return height; }
+    float GetAspect() const { return width / height; }
 private:
     glm::vec2 position;
     float zoom;
@@ -33,7 +37,5 @@ private:
     float _zoomMin = 0.01f;
     float _zoomMax = 2500.0f;
 };
-
-
 
 #endif //SIMULATION_VIEWPORT_H
