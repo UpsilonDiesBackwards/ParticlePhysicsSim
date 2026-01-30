@@ -17,8 +17,8 @@ void Viewport::Move(float xOffset, float yOffset, bool rawWorldUnits) {
         position.x += xOffset;
         position.y += yOffset;
     } else {
-        position.x += xOffset * _panSpeed * GET_APP.time.GetDeltaTime();
-        position.y += yOffset * _panSpeed * GET_APP.time.GetDeltaTime();
+        position.x += xOffset * (_panSpeed * GET_APP.camera->GetZoom()) * GET_APP.time.GetDeltaTime();
+        position.y += yOffset * (_panSpeed * GET_APP.camera->GetZoom()) * GET_APP.time.GetDeltaTime();
     }
 }
 

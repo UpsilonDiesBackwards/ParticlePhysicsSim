@@ -57,6 +57,8 @@ public:
 
     SimulationSystem simulationSystem;
     Interface simInterface;
+
+    bool captureMouse = false;
 private:
     Application(int width, int height, const char* title);
 

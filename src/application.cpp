@@ -12,6 +12,7 @@
 
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
@@ -40,6 +41,7 @@ void Application::Initialise() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     window = glfwCreateWindow(width, height, title, NULL, NULL);
     if (!window) {
@@ -48,7 +50,7 @@ void Application::Initialise() {
         return;
     } else
         std::cout << "Window Created" << std::endl;
-    glfwWindowHint(GLFW_SAMPLES, 4);
+
 
     glfwSetFramebufferSizeCallback(window,
                                    [](GLFWwindow *win, int w, int h) {
@@ -58,9 +60,12 @@ void Application::Initialise() {
                                        app.getCamera()->UpdateViewport((float) w, (float) h);
                                    });
 
-
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+
 
     inputManager.SetWindow(window);
 
@@ -92,8 +97,8 @@ void Application::Initialise() {
         if (playState != PlayState_STOP) return;
 
         glm::vec2 worldPos = ScreenToWorld(
-        inputManager.getMouseX(),
-        inputManager.getMouseY()
+            inputManager.getMouseX(),
+            inputManager.getMouseY()
         );
 
         simulationSystem.CreateParticle(
@@ -103,27 +108,41 @@ void Application::Initialise() {
     });
 
     input.BindKey(GLFW_KEY_LEFT_SHIFT, KEY_DOWN, [this]() {
-        isPanning = true;
+        if (!isPanning) {
+                lastMouse = {
+                    inputManager.getMouseX(),
+                    inputManager.getMouseY()
+                };
+            }
+            isPanning = true;
     });
 
     input.BindKey(GLFW_KEY_LEFT_SHIFT, KEY_UP, [this]() {
         isPanning = false;
     });
 
+    input.BindKey(GLFW_KEY_TAB, KEY_UP, [this]() {
+       captureMouse = !captureMouse;
+    });
+
     input.BindKey(GLFW_KEY_1, KEY_DOWN, [this]() {
         targetParticleType = ParticleType::ParticleType_Proton;
+        simInterface.selectedType = ParticleType::ParticleType_Proton;
     });
 
     input.BindKey(GLFW_KEY_2, KEY_DOWN, [this]() {
         targetParticleType = ParticleType::ParticleType_Neutron;
+        simInterface.selectedType = ParticleType::ParticleType_Neutron;
     });
 
     input.BindKey(GLFW_KEY_3, KEY_DOWN, [this]() {
         targetParticleType = ParticleType::ParticleType_Electron;
+        simInterface.selectedType = ParticleType::ParticleType_Electron;
     });
 
     input.BindKey(GLFW_KEY_4, KEY_DOWN, [this]() {
         targetParticleType = ParticleType::ParticleType_Photon;
+        simInterface.selectedType = ParticleType::ParticleType_Photon;
     });
 
     input.BindScroll([this](double, double y) {
@@ -169,6 +188,12 @@ void Application::Run() {
         camera->Move(delta.x, delta.y, true);
 
         lastMouse = current;
+    }
+
+    if (captureMouse) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+    } else {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
     simulationSystem.RenderAll(
