@@ -11,6 +11,7 @@
 
 #include "glad/glad.h"
 
+
 Particle::Particle(const Properties &properties) : _properties(properties) {
 }
 

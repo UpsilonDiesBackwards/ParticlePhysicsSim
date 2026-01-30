@@ -9,7 +9,6 @@
 
 #include "particletypes.h"
 
-
 class Particle {
 public:
     struct Properties {
@@ -27,6 +26,10 @@ public:
     void CreateMesh(int segments = 50);
     void Render(unsigned int sProgram, const glm::mat4& projection) const;
 
+    void SetColor(const glm::vec4& color) { _properties.color = color; }
+    const glm::vec4& GetColor() const { return _properties.color; }
+
+    ParticleType GetType() const { return _properties.type; }
 private:
     Properties _properties;
     unsigned int _vao = 0;

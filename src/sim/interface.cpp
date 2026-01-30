@@ -29,10 +29,7 @@ const char* GetPlayState(PlayState state) {
 }
 
 void Interface::Show() {
-
-
     ImGui::SetNextWindowSize(ImVec2(320, 560));
-
     ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoNavInputs);
 
     ImGui::Text("Simulation");
@@ -99,6 +96,32 @@ void Interface::Show() {
     ImGui::Text("Particle Counts (P/N/E,Ph): %d / %d / %d / %d", protonCount, neutronCount, electronCount, photonCount);
 
     ImGui::Separator();
+    ImGui::Text("Particle Colors");
+
+    glm::vec4& protonColor   = GET_APP.simulationSystem.GetParticleColor(ParticleType::ParticleType_Proton);
+    glm::vec4& neutronColor  = GET_APP.simulationSystem.GetParticleColor(ParticleType::ParticleType_Neutron);
+    glm::vec4& electronColor = GET_APP.simulationSystem.GetParticleColor(ParticleType::ParticleType_Electron);
+    glm::vec4& photonColor   = GET_APP.simulationSystem.GetParticleColor(ParticleType::ParticleType_Photon);
+
+    // Proton
+    if (ImGui::ColorEdit4("Proton Color", (float*)&protonColor)) {
+        GET_APP.simulationSystem.UpdateParticleColors(ParticleType::ParticleType_Proton, protonColor);
+    }
+
+    // Neutron
+    if (ImGui::ColorEdit4("Neutron Color", (float*)&neutronColor)) {
+        GET_APP.simulationSystem.UpdateParticleColors(ParticleType::ParticleType_Neutron, neutronColor);
+    }
+
+    // Electron
+    if (ImGui::ColorEdit4("Electron Color", (float*)&electronColor)) {
+        GET_APP.simulationSystem.UpdateParticleColors(ParticleType::ParticleType_Electron, electronColor);
+    }
+
+    // Photon
+    if (ImGui::ColorEdit4("Photon Color", (float*)&photonColor)) {
+        GET_APP.simulationSystem.UpdateParticleColors(ParticleType::ParticleType_Photon, photonColor);
+    }
 
     ImGui::End();
 }

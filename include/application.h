@@ -62,6 +62,7 @@ public:
 private:
     Application(int width, int height, const char* title);
 
+    void SetupInputBindings();
 
     GLFWwindow* window;
     int width, height;
