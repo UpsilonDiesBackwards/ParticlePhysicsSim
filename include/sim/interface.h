@@ -14,6 +14,8 @@ public:
     ParticleType selectedType = ParticleType::ParticleType_Proton;
 
     int protonCount, neutronCount, electronCount, photonCount;
+
+    void ResetParticleCounts();
 };
 
 

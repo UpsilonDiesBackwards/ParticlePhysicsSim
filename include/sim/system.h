@@ -45,6 +45,8 @@ public:
         currentColors[type] = color;
     }
 
+    void ClearAllParticles() { _particles.clear(); }
+
     Shader* shader;
 
 private:

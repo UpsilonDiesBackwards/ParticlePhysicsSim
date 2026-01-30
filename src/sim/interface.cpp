@@ -52,6 +52,11 @@ void Interface::Show() {
         ImGui::EndCombo();
     }
 
+    if (ImGui::Button("Clear all Particles")) {
+        GET_APP.GetInstance().simulationSystem.ClearAllParticles();
+        ResetParticleCounts();
+    }
+
     ImGui::Separator();
 
     ImGui::Text("Playback");
@@ -124,4 +129,11 @@ void Interface::Show() {
     }
 
     ImGui::End();
+}
+
+void Interface::ResetParticleCounts() {
+    protonCount = 0;
+    neutronCount = 0;
+    electronCount = 0;
+    photonCount = 0;
 }
