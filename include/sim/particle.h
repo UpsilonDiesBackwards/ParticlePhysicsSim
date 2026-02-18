@@ -30,6 +30,16 @@ public:
     const glm::vec4& GetColor() const { return _properties.color; }
 
     ParticleType GetType() const { return _properties.type; }
+
+    glm::vec2 GetPosition() const { return _properties.position; }
+    void SetPosition(const glm::vec2& position) { _properties.position = position; }
+
+    float GetRadius() const { return _properties.radius; }
+    void SetRadius(float radius) { _properties.radius = radius; }
+
+    float GetMass() const { return _properties.mass; }
+    void SetMass(float mass) { _properties.mass = mass; }
+
 private:
     Properties _properties;
     unsigned int _vao = 0;

@@ -59,6 +59,55 @@ void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projecti
     }
 }
 
+void SimulationSystem::ResolveCollisions() {
+    UpdateGrid();
+
+    for (auto& p1 : _particles) {
+        int centerX = static_cast<int>((p1.GetPosition().x - grid.worldMin.x) / grid.cellSize);
+        int centerY = static_cast<int>((p1.GetPosition().y - grid.worldMin.y) / grid.cellSize);
+
+        for (int x = centerX - 1; x <= centerX + 1; ++x) {
+            for (int y = centerY - 1; y <= centerY + 1; ++y) {
+                if (x < 0 || x >= grid.cols || y < 0 || y >= grid.rows) continue;
+
+                int key = x + (y * grid.cols);
+                for (Particle* p2 : grid.cells[key]) {
+                    if (&p1 == p2) continue;
+                    glm::vec2 dir = p1.GetPosition() - p2->GetPosition();
+                    float dist = glm::length(dir);
+                    float minDist = p1.GetRadius() + p2->GetRadius();
+
+                    if (dist < minDist) {
+                        if (dist == 0.0f) {
+                            dir = glm::vec2(0.01f, 0.0f);
+                            dist = 0.01f;
+                        }
+
+                        float overlap = (minDist - dist) * 0.5f;
+                        glm::vec2 separation = (dir / dist) * overlap;
+
+                        p1.SetPosition(p1.GetPosition() + separation);
+                        p2->SetPosition(p2->GetPosition() - separation);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SimulationSystem::UpdateGrid() {
+    for (auto& cell : grid.cells) {
+        cell.clear();
+    }
+
+    for (auto& p : _particles) {
+        int key = grid.GetKey(p.GetPosition());
+        if (key != -1) {
+            grid.cells[key].push_back(&p);
+        }
+    }
+}
+
 Particle::Properties SimulationSystem::CreateParticleProperties(ParticleType type, const glm::vec2 &position) {
     Particle::Properties properties;
     ParticleMass mass;

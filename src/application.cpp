@@ -131,6 +131,8 @@ void Application::Run() {
         camera->GetView()
     );
 
+    simulationSystem.ResolveCollisions();
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -180,7 +182,9 @@ void Application::SetupInputBindings() {
     });
 
     input.BindMouseButton(GLFW_MOUSE_BUTTON_1, MOUSE_UP, [this]() {
-        if (ImGui::GetIO().WantCaptureMouse) return;
+        if (ImGui::GetIO().WantCaptureMouse)
+            return;
+
         if (playState != PlayState_STOP) return;
 
         glm::vec2 worldPos = ScreenToWorld(
@@ -188,10 +192,8 @@ void Application::SetupInputBindings() {
             inputManager.getMouseY()
         );
 
-        simulationSystem.CreateParticle(
-        targetParticleType,
-        worldPos
-        );
+        simulationSystem.UpdateGrid();
+        simulationSystem.CreateParticle(targetParticleType, worldPos);
     });
 
     input.BindKey(GLFW_KEY_LEFT_SHIFT, KEY_DOWN, [this]() {
