@@ -71,3 +71,11 @@ glm::vec2 Viewport::GetPosition() const {
 float Viewport::GetZoom() const {
     return zoom;
 }
+
+void Viewport::SetPosition(glm::vec2 newPos) {
+    position = newPos;
+}
+
+void Viewport::SetZoom(float newZoom) {
+    zoom = newZoom;
+}

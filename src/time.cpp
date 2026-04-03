@@ -19,9 +19,14 @@ void Time::Update() {
     deltaTime = currentTime - lastTime;
     lastTime = currentTime;
 
-    fps = static_cast<int>(1.0 / deltaTime);
+    if (deltaTime > 0.0) {
+        fps = static_cast<int>(1.0 / deltaTime);
+    }
 
-    frameTime = deltaTime * 1000.0f; // Convert to milliseconds
+    fpsHistory[historyOffset] = static_cast<float>(fps);
+    historyOffset = (historyOffset + 1) % 100;
+
+    frameTime = static_cast<float>(deltaTime * 1000.0);
 }
 
 /**

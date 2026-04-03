@@ -57,6 +57,13 @@ void Interface::Show() {
         ResetParticleCounts();
     }
 
+    ImGui::SameLine();
+
+    if (ImGui::Button("Camera to Origin")) {
+        GET_APP.camera->SetPosition(glm::vec2(0.0f, 0.0f));
+        GET_APP.camera->SetZoom(1.0f);
+    }
+
     ImGui::Separator();
 
     ImGui::Text("Playback");
@@ -89,6 +96,46 @@ void Interface::Show() {
     ImGui::Separator();
 
     ImGui::Text("Stats");
+
+    int currentFPS = GET_APP.time.GetCurrentFPS();
+
+    if (currentFPS < 30) {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "FPS: %d (Critical)", currentFPS);
+    } else if (currentFPS < 60) {
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "FPS: %d (Fair)", currentFPS); // Orange
+    } else {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "FPS: %d (Good)", currentFPS);
+    }
+
+    // Collapsable Graph
+    if (ImGui::CollapsingHeader("Performance Graph")) {
+        float currentFPS = static_cast<float>(GET_APP.time.GetCurrentFPS());
+        ImVec4 plotColor;
+
+        if (currentFPS < 30.0f) {
+            plotColor = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); // Red
+        } else if (currentFPS < 60.0f) {
+            plotColor = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); // Orange
+        } else {
+            plotColor = ImVec4(0.2f, 1.0f, 0.2f, 1.0f); // Green
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, plotColor);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.05f, 0.05f, 0.05f, 0.54f));
+
+        ImGui::PlotHistogram(
+            "##FPS_Histogram",
+            GET_APP.time.GetFPSHistory(),
+            GET_APP.time.GetHistorySize(),
+            0,
+            "FPS History",
+            0.0f,
+            144.0f,
+            ImVec2(0, 80)
+        );
+
+        ImGui::PopStyleColor(2);
+    }
 
     ImGui::Text("Coords: X %.2f, Y %.2f", GET_APP.getCamera()->GetPosition().x, GET_APP.getCamera()->GetPosition().y);
     ImGui::Text("Zoom: %.2f %%", GET_APP.camera->GetZoom());
@@ -126,6 +173,18 @@ void Interface::Show() {
     // Photon
     if (ImGui::ColorEdit4("Photon Color", (float*)&photonColor)) {
         GET_APP.simulationSystem.UpdateParticleColors(ParticleType::ParticleType_Photon, photonColor);
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Physics Settings");
+
+    if (ImGui::InputInt("Collision Steps", &GET_APP.collisionResolutionCount)) {
+        if (GET_APP.collisionResolutionCount < 1) GET_APP.collisionResolutionCount = 1;
+        if (GET_APP.collisionResolutionCount > 50) GET_APP.collisionResolutionCount = 50;
+    }
+
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Higher values = more stable physics, but lower FPS.");
     }
 
     ImGui::End();

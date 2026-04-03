@@ -3,12 +3,15 @@ project(Simulation)
 
 set(CMAKE_CXX_STANDARD 20)
 
+message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
+
 cmake_policy(SET CMP0072 NEW)
 set(OpenGL_GL_PREFERENCE GLVND)
 
 # ---- glad ----
 add_library(glad
         vendor/glad/src/glad.c
+        include/sim/forces/forceprovider.h
 )
 target_include_directories(glad PUBLIC
         vendor/glad/include
@@ -30,6 +33,7 @@ target_include_directories(imgui PUBLIC
 # ---- executable ----
 add_executable(Simulation
         main.cpp
+
         src/shader.cpp
         src/viewport.cpp
         src/io/input.cpp
@@ -48,6 +52,9 @@ add_executable(Simulation
         src/sim/system.cpp
         src/sim/interface.cpp
         include/sim/interface.h
+        include/sim/forces/forceprovider.h
+        src/sim/forces/gravitationalforce.cpp
+        include/sim/forces/gravitationalforce.h
 )
 
 target_include_directories(Simulation PUBLIC

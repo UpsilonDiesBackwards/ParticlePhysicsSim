@@ -25,6 +25,9 @@ public:
     float GetWidth()  const { return width; }
     float GetHeight() const { return height; }
     float GetAspect() const { return width / height; }
+
+    void SetPosition(glm::vec2 position);
+    void SetZoom(float zoom);
 private:
     glm::vec2 position;
     float zoom;

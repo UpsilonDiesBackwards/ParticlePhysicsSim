@@ -13,8 +13,8 @@
 #include "backends/imgui_impl_opengl3.h"
 
 #include "../include/io/input.h"
+#include "../include/sim/forces/gravitationalforce.h"
 #include "glad/glad.h"
-
 
 Application::Application(int width, int height, const char *title) : window(nullptr), width(width), height(height),
                                                                      title(title),
@@ -77,10 +77,13 @@ void Application::Initialise() {
     );
 
     SetupInputBindings();
+
+    simulationSystem.AddForce(std::make_unique<GravitationalForce>());
 }
 
 void Application::Run() {
-    glfwPollEvents();
+    time.Update();
+    time.FixedUpdate();
 
     Application &app = GetInstance();
 
@@ -93,7 +96,19 @@ void Application::Run() {
 
     simInterface.Show();
 
+    glfwPollEvents();
     input.Update();
+
+    float dt = (float)time.GetDeltaTime();
+
+    if (playState == PlayState_PLAY) {
+        simulationSystem.Update(dt);
+    } else if (playState == PlayState_STEP) {
+        simulationSystem.Update(0.01667f);
+        playState = PlayState_PAUSE;
+    } else if (playState == PlayState_PAUSE) {
+
+    }
 
     ImGuiIO& io = ImGui::GetIO();
     if (io.WantCaptureMouse) {
@@ -130,8 +145,6 @@ void Application::Run() {
         camera->GetProjection(),
         camera->GetView()
     );
-
-    simulationSystem.ResolveCollisions();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

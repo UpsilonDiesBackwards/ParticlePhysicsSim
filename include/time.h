@@ -28,11 +28,17 @@ public:
 
     float GetFixedDeltaTime();
 
+    const float* GetFPSHistory() const { return fpsHistory; }
+    int GetHistorySize() const { return 100; }
+
 private:
     double lastTime;
     double deltaTime;
     int fps;
     float frameTime;
+
+    float fpsHistory[100] = {};
+    int historyOffset = 0;
 
     // Accumulator for phys updates
     float _accumulator = 0.0f;

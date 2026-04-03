@@ -32,18 +32,17 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
         case ParticleType::ParticleType_Photon:
             GET_APP.simInterface.photonCount++;
             break;
-    }
-
-    if (props.type == ParticleType::ParticleType_Proton) {
-
+        default: break;
     }
 }
 
 void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projection, const glm::mat4& view) {
-    shader = new Shader(
-    (GET_APP.GetExecutablePath() + "/../res/shaders/circle.vert").c_str(),
-    (GET_APP.GetExecutablePath() + "/../res/shaders/circle.frag").c_str()
-    );
+    if (shader == nullptr) {
+        shader = new Shader(
+        (GET_APP.GetExecutablePath() + "/../res/shaders/circle.vert").c_str(),
+        (GET_APP.GetExecutablePath() + "/../res/shaders/circle.frag").c_str()
+        );
+    }
 
     glUseProgram(program);
 
@@ -56,6 +55,21 @@ void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projecti
 
     for (const auto& particle: _particles) {
         particle.Render(shader->ID, projection);
+    }
+}
+
+void SimulationSystem::Update(float dT) {
+    for (auto& force : _forces) {
+        force->Apply(_particles, dT);
+    }
+
+    for (auto& particle : _particles) {
+        particle.Integrate(dT);
+    }
+
+    for (int i = 0; i < GET_APP.collisionResolutionCount; i++) {
+        UpdateGrid();
+        ResolveCollisions();
     }
 }
 
@@ -83,8 +97,11 @@ void SimulationSystem::ResolveCollisions() {
                             dist = 0.01f;
                         }
 
-                        float overlap = (minDist - dist) * 0.5f;
-                        glm::vec2 separation = (dir / dist) * overlap;
+                        float overlap = (minDist - dist);
+                        float slop = 0.01f;
+                        float resolutionForce = std::max(0.0f, overlap + slop);
+
+                        glm::vec2 separation = (dir / dist) * (resolutionForce * 0.5f);
 
                         p1.SetPosition(p1.GetPosition() + separation);
                         p2->SetPosition(p2->GetPosition() - separation);
@@ -106,6 +123,10 @@ void SimulationSystem::UpdateGrid() {
             grid.cells[key].push_back(&p);
         }
     }
+}
+
+void SimulationSystem::AddForce(std::unique_ptr<IForceProvider> force) {
+    _forces.push_back(std::move(force));
 }
 
 Particle::Properties SimulationSystem::CreateParticleProperties(ParticleType type, const glm::vec2 &position) {

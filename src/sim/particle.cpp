@@ -11,7 +11,6 @@
 
 #include "glad/glad.h"
 
-
 Particle::Particle(const Properties &properties) : _properties(properties) {
 }
 
@@ -66,4 +65,15 @@ void Particle::Render(unsigned int sProgram, const glm::mat4 &projection) const 
     glBindVertexArray(_vao);
     glDrawArrays(GL_TRIANGLE_FAN, 0, _vertexCount);
     glBindVertexArray(0);
+}
+
+void Particle::AddAcceleration(const glm::vec2& acc) {
+    _properties.acceleration += acc;
+}
+
+void Particle::Integrate(float dT) {
+    _properties.velocity += _properties.acceleration * dT;
+    _properties.position += _properties.velocity * dT;
+
+    _properties.acceleration = glm::vec2(0.0f);
 }

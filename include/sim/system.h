@@ -10,16 +10,18 @@
 #include <vector>
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <memory>
 #include <glm/gtx/norm.hpp>
 
 #include "particle.h"
 #include "particletypes.h"
 
 #include "../../include/shader.h"
+#include "forces/forceprovider.h"
 
 class SimulationSystem {
 public:
-    SimulationSystem() : grid(200.0f, 200.0f, 2.0f, {-100.0f, -100.0f})
+    SimulationSystem() : grid(1000, 1000.0f, 2.0f, {-100.0f, -100.0f})
     {
         currentColors[ParticleType::ParticleType_Proton] = {0.98f, 0.12f, 0.06f, 1.0f};
         currentColors[ParticleType::ParticleType_Neutron] = {0.06f, 0.43f, 0.98f, 1.0f};
@@ -29,6 +31,9 @@ public:
 
     void CreateParticle(ParticleType type, const glm::vec2& position);
     void RenderAll(unsigned int program, const glm::mat4 & projection, const glm::mat4& view);
+
+    // Main Update loop
+    void Update(float dT);
 
     glm::vec4& GetParticleColor(ParticleType type) {
         switch (type) {
@@ -55,10 +60,14 @@ public:
     void ResolveCollisions();
     void UpdateGrid();
 
+    void AddForce(std::unique_ptr<IForceProvider> force);
+
     Shader* shader;
 
 private:
     std::vector<Particle> _particles;
+    std::vector<std::unique_ptr<IForceProvider>> _forces;
+
     std::unordered_map<ParticleType, glm::vec4> currentColors;
 
     Particle::Properties CreateParticleProperties(ParticleType type, const glm::vec2& position);
@@ -79,9 +88,9 @@ private:
             cells.resize(cols * rows);
         }
 
-        int GetKey(glm::vec2 pos) const {
-            int x = static_cast<int>((pos.x - worldMin.x) / cellSize);
-            int y = static_cast<int>((pos.y - worldMin.y) / cellSize);
+        [[nodiscard]] int GetKey(glm::vec2 pos) const {
+            const int x = static_cast<int>((pos.x - worldMin.x) / cellSize);
+            const int y = static_cast<int>((pos.y - worldMin.y) / cellSize);
 
             if (x < 0 || x >= cols || y < 0 || y >= rows) return -1;
             return x + (y * cols);

@@ -59,6 +59,9 @@ public:
     Interface simInterface;
 
     bool captureMouse = false;
+
+    int collisionResolutionCount = 5;
+
 private:
     Application(int width, int height, const char* title);
 

@@ -16,6 +16,9 @@ public:
         float radius = 1.0f;
         float mass = 0.1f;
 
+        glm::vec2 velocity = { 0.0f, 0.0f };
+        glm::vec2 acceleration = { 0.0f, 0.0f };
+
         glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
         ParticleType type = ParticleType::ParticleType_Neutron;
@@ -39,6 +42,10 @@ public:
 
     float GetMass() const { return _properties.mass; }
     void SetMass(float mass) { _properties.mass = mass; }
+
+    void AddAcceleration(const glm::vec2& acc);
+
+    void Integrate(float dT);
 
 private:
     Properties _properties;
