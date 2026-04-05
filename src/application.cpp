@@ -32,13 +32,16 @@ void Application::Initialise() {
         return;
     }
 
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
+#else
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-    glfwWindowHint(GLFW_SAMPLES, 4);
 
     window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (!window) {
@@ -156,7 +159,14 @@ void Application::InitialiseImGui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext(); // Create ImGui Context
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330");
+
+    ImGuiIO &io = ImGui::GetIO();
+
+#ifdef __APPLE__
+    ImGui_ImplOpenGL3_Init("#version 150");
+#else
+    ImGui_ImplOpenGL3_Init("#version 130");
+#endif
 
 #if DEBUG
     _imguiTestEngine = ImGuiTestEngine_CreateContext();
@@ -169,7 +179,7 @@ void Application::InitialiseImGui() {
     ImGuiTestEngine_Start(_imguiTestEngine, ImGui::GetCurrentContext());
     ImGuiTestEngine_InstallDefaultCrashHandler();
 #endif
-    ImGuiIO &io = ImGui::GetIO();
+
     // Ini file saving is handled by the WorkspaceManager.
     io.IniFilename = nullptr;
     io.ConfigWindowsMoveFromTitleBarOnly = true;
@@ -272,14 +282,26 @@ Viewport *Application::getCamera() {
     return camera;
 }
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 std::string Application::GetExecutablePath() {
+#ifdef __APPLE__
+    char path[1024];
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        std::string sPath(path);
+        return sPath.substr(0, sPath.find_last_of('/'));
+    }
+#else
     char result[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
     if (count != -1) {
         std::string path(result, count);
-        size_t pos = path.find_last_of('/');
-        return path.substr(0, pos);
+        return path.substr(0, path.find_last_of('/'));
     }
+#endif
     return "";
 }
 

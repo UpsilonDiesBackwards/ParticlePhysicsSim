@@ -3,10 +3,23 @@ project(Simulation)
 
 set(CMAKE_CXX_STANDARD 20)
 
-message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
-
 cmake_policy(SET CMP0072 NEW)
 set(OpenGL_GL_PREFERENCE GLVND)
+
+if(APPLE)
+    message(STATUS "Configuring for macOS")
+    if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+        add_definitions(-DMACOS_SILICON)
+    endif()
+    set(PLATFORM_LIBS "-framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL")
+else()
+    message(STATUS "Configuring for Linux")
+    set(PLATFORM_LIBS "dl" "pthread")
+endif()
+
+# ---- OpenGL & GLFW ----
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
 
 # ---- glad ----
 add_library(glad
@@ -25,15 +38,19 @@ file(GLOB IMGUI_SRC
 )
 
 add_library(imgui ${IMGUI_SRC})
+
+
 target_include_directories(imgui PUBLIC
         vendor/imgui
         vendor/imgui/backends
+        vendor/glad/include
 )
+
+target_link_libraries(imgui PUBLIC glfw)
 
 # ---- executable ----
 add_executable(Simulation
         main.cpp
-
         src/shader.cpp
         src/viewport.cpp
         src/io/input.cpp
@@ -46,7 +63,6 @@ add_executable(Simulation
         include/time.h
         include/sim/system.h
         include/sim/particletypes.h
-        src/sim/particle.cpp
         src/sim/particle.cpp
         include/sim/particle.h
         src/sim/system.cpp
@@ -62,13 +78,10 @@ target_include_directories(Simulation PUBLIC
         vendor/glad/include
 )
 
-# ---- OpenGL ----
-find_package(OpenGL REQUIRED)
-
 target_link_libraries(Simulation
         glad
         imgui
         glfw
         OpenGL::GL
-        dl
+        ${PLATFORM_LIBS}
 )
