@@ -38,10 +38,17 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
 
 void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projection, const glm::mat4& view) {
     if (shader == nullptr) {
+#ifdef __APPLE__
         shader = new Shader(
-        (GET_APP.GetExecutablePath() + "/../res/shaders/circle.vert").c_str(),
-        (GET_APP.GetExecutablePath() + "/../res/shaders/circle.frag").c_str()
+        (GET_APP.GetExecutablePath() + "/../res/shaders/macos/circle.vert").c_str(),
+        (GET_APP.GetExecutablePath() + "/../res/shaders/macos/circle.frag").c_str()
         );
+#else
+        shader = new Shader(
+(GET_APP.GetExecutablePath() + "/../res/shaders/circle.vert").c_str(),
+(GET_APP.GetExecutablePath() + "/../res/shaders/circle.frag").c_str()
+);
+#endif
     }
 
     glUseProgram(program);

@@ -74,10 +74,17 @@ void Application::Initialise() {
 
     glEnable(GL_MULTISAMPLE);
 
+#ifdef __APPLE__
     shader = new Shader(
-        (GetExecutablePath() + "/../res/shaders/shader.vert").c_str(),
-        (GetExecutablePath() + "/../res/shaders/shader.frag").c_str()
+        (GetExecutablePath() + "/../res/shaders/macos/shader.vert").c_str(),
+        (GetExecutablePath() + "/../res/shaders/macos/shader.frag").c_str()
     );
+#else
+    shader = new Shader(
+    (GetExecutablePath() + "/../res/shaders/shader.vert").c_str(),
+    (GetExecutablePath() + "/../res/shaders/shader.frag").c_str()
+);
+#endif
 
     SetupInputBindings();
 
