@@ -95,6 +95,11 @@ void Interface::Show() {
 
     ImGui::Separator();
 
+    ImGui::Text("Simulation Settings");
+    ImGui::SliderFloat("Simulation Speed", &GET_APP.simulationSystem.properties.timeScale, 0.1f, 10.0f);
+
+    ImGui::Separator();
+
     ImGui::Text("Stats");
 
     int currentFPS = GET_APP.time.GetCurrentFPS();

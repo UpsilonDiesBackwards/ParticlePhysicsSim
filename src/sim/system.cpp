@@ -16,32 +16,46 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
     Particle::Properties props = CreateParticleProperties(type, position);
 
     if (type == ParticleType::ParticleType_Electron && !_particles.empty()) {
-        glm::vec2 centerOfMass(0.0f);
-        float totalMass = 0.0f;
+        glm::vec2 nucleusCOM(0.0f);
+        float totalNucleusMass = 0.0f;
+        float totalNucleusCharge = 0.0f;
+        int existingElectrons = 0;
+
         for (const auto& p : _particles) {
-            centerOfMass += p.GetPosition() * p.GetMass();
-            totalMass += p.GetMass();
+            if (p.GetType() == ParticleType::ParticleType_Proton) totalNucleusCharge += p.GetCharge();
+            if (p.GetType() == ParticleType::ParticleType_Electron) existingElectrons++;
         }
-        centerOfMass /= totalMass;
 
-        glm::vec2 diff = position - centerOfMass;
-        float dist = glm::length(diff);
-
-        if (dist > 0.1f) {
-            const float Ke = 0.0005f;
-
-            float netCharge = 0.0f;
-            for (const auto& p : _particles) {
-                netCharge += p.GetCharge();
+        for (const auto& p : _particles) {
+            if (p.GetType() == ParticleType::ParticleType_Proton || p.GetType() == ParticleType::ParticleType_Neutron) {
+                nucleusCOM += p.GetPosition() * p.GetMass();
+                totalNucleusMass += p.GetMass();
+                if (p.GetType() == ParticleType::ParticleType_Proton) {
+                    totalNucleusCharge += p.GetCharge();
+                }
             }
+        }
 
-            float pullStrength = (GET_APP.simulationSystem.properties.Gn * totalMass) + (Ke * std::abs(netCharge));
-            float speed = std::sqrt(pullStrength / dist);
+        if (totalNucleusMass > 0.0f) {
+            nucleusCOM /= totalNucleusMass;
+            glm::vec2 diff = position - nucleusCOM;
+            float dist = glm::length(diff);
 
-            glm::vec2 unitDiff = diff / dist;
-            glm::vec2 tangent(-unitDiff.y, unitDiff.x);
+            if (dist > 0.1f) {
+                float Ke = GET_APP.simulationSystem.properties.Ke;
+                float softening = GET_APP.simulationSystem.properties.Softening;
 
-            props.velocity = tangent * speed;
+                float effectiveCharge = totalNucleusCharge - (existingElectrons * 0.5f);
+                if (effectiveCharge < 0.5f) effectiveCharge = 0.5f;
+
+                float forceMag = (Ke * effectiveCharge) / (dist * dist + softening);
+                float speed = std::sqrt((forceMag / props.mass) * dist);
+
+                glm::vec2 unitDiff = diff / dist;
+                glm::vec2 tangent(-unitDiff.y, unitDiff.x);
+
+                props.velocity = tangent * speed;
+            }
         }
     }
 
@@ -49,19 +63,12 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
     particle.CreateMesh();
     _particles.push_back(particle);
 
+    // Update UI counters
     switch (props.type) {
-        case ParticleType::ParticleType_Proton:
-            GET_APP.simInterface.protonCount++;
-            break;
-        case ParticleType::ParticleType_Neutron:
-            GET_APP.simInterface.neutronCount++;
-            break;
-        case ParticleType::ParticleType_Electron:
-            GET_APP.simInterface.electronCount++;
-            break;
-        case ParticleType::ParticleType_Photon:
-            GET_APP.simInterface.photonCount++;
-            break;
+        case ParticleType::ParticleType_Proton:   GET_APP.simInterface.protonCount++;   break;
+        case ParticleType::ParticleType_Neutron:  GET_APP.simInterface.neutronCount++;  break;
+        case ParticleType::ParticleType_Electron: GET_APP.simInterface.electronCount++; break;
+        case ParticleType::ParticleType_Photon:   GET_APP.simInterface.photonCount++;   break;
         default: break;
     }
 }
@@ -89,6 +96,11 @@ void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projecti
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
+    for (const auto& particle : _particles) {
+        if (particle.GetType() == ParticleType::ParticleType_Electron) {
+            particle.RenderElectronTrailPath(shader->ID);
+        }
+    }
 
     for (const auto& particle: _particles) {
         particle.Render(shader->ID, projection);
@@ -96,17 +108,21 @@ void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projecti
 }
 
 void SimulationSystem::Update(float dT) {
-    for (auto& force : _forces) {
-        force->Apply(_particles, dT);
-    }
+    int baseSubsteps = 8;
+    int totalSubsteps = static_cast<int>(baseSubsteps * properties.timeScale);
+    float subDT = (dT * properties.timeScale) / (float)totalSubsteps;
 
-    for (auto& particle : _particles) {
-        particle.Integrate(dT);
-    }
+    for (int s = 0; s < totalSubsteps; s++) {
+        for (auto& force : _forces) {
+            force->Apply(_particles, subDT);
+        }
+        for (auto& particle : _particles) {
+            particle.Integrate(subDT);
+        }
 
-    for (int i = 0; i < GET_APP.collisionResolutionCount; i++) {
-        UpdateGrid();
-        ResolveCollisions();
+        if (s % 4 == 0) {
+            ResolveCollisions();
+        }
     }
 }
 
@@ -129,12 +145,12 @@ void SimulationSystem::ResolveCollisions() {
                     float dist = glm::length(dir);
                     float minDist = p1.GetRadius() + p2->GetRadius();
 
-                    if ((p1.GetType() == ParticleType::ParticleType_Electron && p2->GetType() == ParticleType::ParticleType_Proton) ||
-                            (p1.GetType() == ParticleType::ParticleType_Proton && p2->GetType() == ParticleType::ParticleType_Electron)) {
-                            continue;
-                    }
-
                     if (dist < minDist) {
+                        if (p1.GetType() == ParticleType::ParticleType_Electron ||
+                            p2->GetType() == ParticleType::ParticleType_Electron) {
+                            continue;
+                        }
+
                         if (dist == 0.0f) {
                             dir = glm::vec2(0.01f, 0.0f);
                             dist = 0.01f;

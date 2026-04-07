@@ -37,6 +37,14 @@ void Particle::CreateMesh(int segments) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void *) 0);
     glEnableVertexAttribArray(0);
 
+    glGenVertexArrays(1, &_trailVao);
+    glGenBuffers(1, &_trailVbo);
+    glBindVertexArray(_trailVao);
+    glBindBuffer(GL_ARRAY_BUFFER, _trailVbo);
+    glBufferData(GL_ARRAY_BUFFER, MAX_TRAIL_POINTS * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
+    glEnableVertexAttribArray(0);
+
     glBindVertexArray(0);
 }
 
@@ -100,10 +108,40 @@ void Particle::AddAcceleration(const glm::vec2& acc) {
 void Particle::Integrate(float dT) {
     _properties.velocity += _properties.acceleration * dT;
 
-    if (_properties.type == ParticleType::ParticleType_Proton || _properties.type == ParticleType::ParticleType_Neutron) {
-        _properties.velocity *= 0.98f;
+    if (_properties.type == ParticleType::ParticleType_Electron) {
+        float maxSpeed = 50.0f;
+        if (glm::length(_properties.velocity) > maxSpeed) {
+            _properties.velocity = glm::normalize(_properties.velocity) * maxSpeed;
+        }
+    } else {
+        _properties.velocity *= 0.95f;
     }
 
     _properties.position += _properties.velocity * dT;
     _properties.acceleration = glm::vec2(0.0f);
+
+    if (_properties.type == ParticleType::ParticleType_Electron) {
+        _trail.push_back(_properties.position);
+        if (_trail.size() > MAX_TRAIL_POINTS) {
+            _trail.erase(_trail.begin());
+        }
+    }
+}
+
+void Particle::RenderElectronTrailPath(unsigned int program) const {
+    if (_trail.size() < 2) return;
+
+    glUseProgram(program);
+
+    glm::vec4 trailColor = _properties.color;
+    trailColor.a = 0.5f;
+    glUniform4fv(glGetUniformLocation(program, "uColor"), 1, &trailColor[0]);
+
+    glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
+
+    glBindBuffer(GL_ARRAY_BUFFER, _trailVbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, _trail.size() * sizeof(glm::vec2), _trail.data());
+
+    glBindVertexArray(_trailVao);
+    glDrawArrays(GL_LINE_STRIP, 0, (GLsizei)_trail.size());
 }

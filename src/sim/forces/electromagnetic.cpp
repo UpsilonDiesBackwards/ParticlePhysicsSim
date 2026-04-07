@@ -6,10 +6,12 @@
 
 #include <glm/ext/quaternion_geometric.hpp>
 
+#include "../../../include/application.h"
+
 void ElectromagneticForce::Apply(std::vector<Particle>& particles, float dT) {
-    const float Ke = 1.f;
-    const float minBohrRadius = 2.f;
-    const float softness = 0.1f;
+    const float Ke = GET_APP.simulationSystem.properties.Ke;
+    const float minBohrRadius = 1.5f;
+    const float softening = GET_APP.simulationSystem.properties.Softening;
 
     for (size_t i = 0; i < particles.size(); ++i) {
         for (size_t j = i + 1; j < particles.size(); ++j) {
@@ -20,28 +22,29 @@ void ElectromagneticForce::Apply(std::vector<Particle>& particles, float dT) {
 
             glm::vec2 diff = p2.GetPosition() - p1.GetPosition();
             float distSq = glm::dot(diff, diff);
-
             if (distSq < 1e-6f) continue;
             float dist = glm::sqrt(distSq);
 
-            // bohr model implementation
-            float mag;
+            float mag = 0.0f;
+            bool isOppositeCharge = (p1.GetCharge() * p2.GetCharge() < 0);
+            bool bothElectrons = (p1.GetType() == ParticleType::ParticleType_Electron &&
+                                  p2.GetType() == ParticleType::ParticleType_Electron);
 
-            // Electron * Proton pair
-            bool isEPPair = (p1.GetType() == ParticleType::ParticleType_Electron && p2.GetType() == ParticleType::ParticleType_Proton) ||
-                                                     (p2.GetType() == ParticleType::ParticleType_Electron && p1.GetType() == ParticleType::ParticleType_Proton);
-
-            if (isEPPair && dist < minBohrRadius) {
-                float springK = 0.1f;
-                mag = (dist - minBohrRadius) * springK;
-
-                auto& electron = (p1.GetType() == ParticleType::ParticleType_Electron) ? p1 : p2;
-                glm::vec2 unitDiff = diff / dist;
-                float radialVel = glm::dot(electron.GetVelocity(), unitDiff);
-
-                electron.SetVelocity(electron.GetVelocity() - (unitDiff * radialVel * 0.05f));
-            } else {
-                mag = (Ke * p1.GetCharge(), p2.GetCharge()) / distSq;
+            if (bothElectrons) {
+                float eSoftening = softening * 20.0f;
+                mag = (Ke * p1.GetCharge() * p2.GetCharge()) / (distSq + eSoftening);
+            }
+            else if (isOppositeCharge) {
+                if (dist < minBohrRadius) {
+                    float forceAtLimit = Ke / (std::pow(minBohrRadius, 2.0f) + softening);
+                    float repulsionFactor = std::pow(minBohrRadius / dist, 4.0f);
+                    mag = -forceAtLimit * repulsionFactor;
+                } else {
+                    mag = (Ke * p1.GetCharge() * p2.GetCharge()) / (distSq + softening);
+                }
+            }
+            else {
+                mag = (Ke * p1.GetCharge() * p2.GetCharge()) / (distSq + softening);
             }
 
             glm::vec2 unitVec = diff / dist;
@@ -51,12 +54,12 @@ void ElectromagneticForce::Apply(std::vector<Particle>& particles, float dT) {
             float mass2 = p2.GetMass();
 
             if (mass1 / mass2 > 100.0f) {
-                p2.AddAcceleration(force / p2.GetMass());
-            } else if (mass1 / mass2 < 0.01f) {
-                p1.AddAcceleration(-force / p1.GetMass());
+                p2.AddAcceleration(force / mass2);
+            } else if (mass2 / mass1 > 100.0f) {
+                p1.AddAcceleration(-force / mass1);
             } else {
-                p1.AddAcceleration(-force / p1.GetMass());
-                p2.AddAcceleration(force / p2.GetMass());
+                p1.AddAcceleration(-force / mass1);
+                p2.AddAcceleration(force / mass2);
             }
         }
     }

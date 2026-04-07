@@ -30,7 +30,12 @@ public:
     }
 
     struct SimulationProperties {
+        float timeScale = 1.0f;
+
         double const Gn = 1.0f; // Gravitational Constant
+        // double const Ke = 0.138f; // Coulomb Constant (is too large, causes problems)
+        double const Ke = 0.5f;
+        float const Softening = 0.1f;
     };
 
     SimulationProperties properties;

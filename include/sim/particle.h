@@ -5,6 +5,7 @@
 #ifndef SIMULATION_PARTICLE_H
 #define SIMULATION_PARTICLE_H
 
+#include <deque>
 #include <glm/fwd.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
@@ -63,11 +64,17 @@ public:
     void AddAcceleration(const glm::vec2& acc);
     void Integrate(float dT);
 
+    void RenderElectronTrailPath(unsigned int program) const;
+
 private:
     Properties _properties;
     unsigned int _vao = 0;
     unsigned int _vbo = 0;
     int _vertexCount = 0;
+
+    std::vector<glm::vec2> _trail;
+    unsigned int _trailVao, _trailVbo;
+    const size_t MAX_TRAIL_POINTS = 100000;
 };
 
 #endif //SIMULATION_PARTICLE_H
