@@ -4,8 +4,10 @@
 
 #ifndef SIMULATION_PARTICLE_H
 #define SIMULATION_PARTICLE_H
+
 #include <glm/fwd.hpp>
 #include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 #include "particletypes.h"
 
@@ -16,12 +18,15 @@ public:
         float radius = 1.0f;
         float mass = 0.1f;
 
+        float age = 0.0f;
+
         glm::vec2 velocity = { 0.0f, 0.0f };
         glm::vec2 acceleration = { 0.0f, 0.0f };
 
         glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
         ParticleType type = ParticleType::ParticleType_Neutron;
+        float charge = ParticleCharge().NEUTRON;
     };
 
     Particle(const Properties& properties);
@@ -43,8 +48,19 @@ public:
     float GetMass() const { return _properties.mass; }
     void SetMass(float mass) { _properties.mass = mass; }
 
-    void AddAcceleration(const glm::vec2& acc);
+    glm::vec2 GetVelocity() const { return _properties.velocity; }
+    void SetVelocity(const glm::vec2& velocity) { _properties.velocity = velocity; }
 
+    float GetAge() const { return _properties.age; }
+    void SetAge(float age) { _properties.age = age; }
+    void AddAge(float dT) { _properties.age += dT; }
+
+    float GetCharge() const { return _properties.charge; }
+    void SetCharge(float charge) { _properties.charge = charge; }
+
+    void Transform(ParticleType newType);
+
+    void AddAcceleration(const glm::vec2& acc);
     void Integrate(float dT);
 
 private:
@@ -53,6 +69,5 @@ private:
     unsigned int _vbo = 0;
     int _vertexCount = 0;
 };
-
 
 #endif //SIMULATION_PARTICLE_H

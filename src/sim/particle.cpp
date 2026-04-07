@@ -67,13 +67,43 @@ void Particle::Render(unsigned int sProgram, const glm::mat4 &projection) const 
     glBindVertexArray(0);
 }
 
+void Particle::Transform(ParticleType newType) {
+    switch (newType) {
+        case ParticleType::ParticleType_Proton:
+            _properties.type = ParticleType::ParticleType_Proton;
+            _properties.mass = ParticleMass().PROTON;
+            _properties.color = ParticleColor().PROTON;
+            break;
+        case ParticleType::ParticleType_Neutron:
+            _properties.type = ParticleType::ParticleType_Neutron;
+            _properties.mass = ParticleMass().NEUTRON;
+            _properties.color = ParticleColor().NEUTRON;
+            break;
+        case ParticleType::ParticleType_Electron:
+            _properties.type = ParticleType::ParticleType_Electron;
+            _properties.mass = ParticleMass().ELECTRON;
+            _properties.color = ParticleColor().ELECTRON;
+            break;
+        case ParticleType::ParticleType_Photon:
+            _properties.type = ParticleType::ParticleType_Photon;
+            _properties.mass = ParticleMass().PHOTON;
+            _properties.color = ParticleColor().PHOTON;
+            break;
+        default: break;
+    }
+}
+
 void Particle::AddAcceleration(const glm::vec2& acc) {
     _properties.acceleration += acc;
 }
 
 void Particle::Integrate(float dT) {
     _properties.velocity += _properties.acceleration * dT;
-    _properties.position += _properties.velocity * dT;
 
+    if (_properties.type == ParticleType::ParticleType_Proton || _properties.type == ParticleType::ParticleType_Neutron) {
+        _properties.velocity *= 0.98f;
+    }
+
+    _properties.position += _properties.velocity * dT;
     _properties.acceleration = glm::vec2(0.0f);
 }

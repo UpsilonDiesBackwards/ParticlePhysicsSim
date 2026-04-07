@@ -24,11 +24,12 @@ find_package(glfw3 REQUIRED)
 # ---- glad ----
 add_library(glad
         vendor/glad/src/glad.c
-        include/sim/forces/forceprovider.h
 )
 target_include_directories(glad PUBLIC
         vendor/glad/include
 )
+
+find_package(glm CONFIG REQUIRED)
 
 # ---- imgui ----
 file(GLOB IMGUI_SRC
@@ -69,8 +70,14 @@ add_executable(Simulation
         src/sim/interface.cpp
         include/sim/interface.h
         include/sim/forces/forceprovider.h
-        src/sim/forces/gravitationalforce.cpp
-        include/sim/forces/gravitationalforce.h
+        src/sim/forces/gravitational.cpp
+        include/sim/forces/gravitational.h
+        src/sim/forces/strong.cpp
+        include/sim/forces/strong.h
+        src/sim/forces/weak.cpp
+        include/sim/forces/weak.h
+        src/sim/forces/electromagnetic.cpp
+        include/sim/forces/electromagnetic.h
 )
 
 target_include_directories(Simulation PUBLIC

@@ -30,13 +30,11 @@ public:
     ~Application();
 
     void Initialise();
+    void InitialiseImGui();
 
     void Run();
 
-    void InitialiseImGui();
-
     void TerminateGlfw();
-
     void TerminateImGui();
 
     PlayState playState = PlayState::PlayState_STOP;
@@ -60,7 +58,7 @@ public:
 
     bool captureMouse = false;
 
-    int collisionResolutionCount = 5;
+    int collisionResolutionCount = 1;
 
 private:
     Application(int width, int height, const char* title);

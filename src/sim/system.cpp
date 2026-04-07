@@ -9,14 +9,44 @@
 
 #include "../../include/application.h"
 #include "../../include/sim/particle.h"
+#include "../../include/sim/forces/gravitational.h"
 #include "glad/glad.h"
 
 void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &position) {
     Particle::Properties props = CreateParticleProperties(type, position);
+
+    if (type == ParticleType::ParticleType_Electron && !_particles.empty()) {
+        glm::vec2 centerOfMass(0.0f);
+        float totalMass = 0.0f;
+        for (const auto& p : _particles) {
+            centerOfMass += p.GetPosition() * p.GetMass();
+            totalMass += p.GetMass();
+        }
+        centerOfMass /= totalMass;
+
+        glm::vec2 diff = position - centerOfMass;
+        float dist = glm::length(diff);
+
+        if (dist > 0.1f) {
+            const float Ke = 0.0005f;
+
+            float netCharge = 0.0f;
+            for (const auto& p : _particles) {
+                netCharge += p.GetCharge();
+            }
+
+            float pullStrength = (GET_APP.simulationSystem.properties.Gn * totalMass) + (Ke * std::abs(netCharge));
+            float speed = std::sqrt(pullStrength / dist);
+
+            glm::vec2 unitDiff = diff / dist;
+            glm::vec2 tangent(-unitDiff.y, unitDiff.x);
+
+            props.velocity = tangent * speed;
+        }
+    }
+
     Particle particle(props);
-
     particle.CreateMesh();
-
     _particles.push_back(particle);
 
     switch (props.type) {
@@ -94,9 +124,15 @@ void SimulationSystem::ResolveCollisions() {
                 int key = x + (y * grid.cols);
                 for (Particle* p2 : grid.cells[key]) {
                     if (&p1 == p2) continue;
+
                     glm::vec2 dir = p1.GetPosition() - p2->GetPosition();
                     float dist = glm::length(dir);
                     float minDist = p1.GetRadius() + p2->GetRadius();
+
+                    if ((p1.GetType() == ParticleType::ParticleType_Electron && p2->GetType() == ParticleType::ParticleType_Proton) ||
+                            (p1.GetType() == ParticleType::ParticleType_Proton && p2->GetType() == ParticleType::ParticleType_Electron)) {
+                            continue;
+                    }
 
                     if (dist < minDist) {
                         if (dist == 0.0f) {
@@ -104,14 +140,30 @@ void SimulationSystem::ResolveCollisions() {
                             dist = 0.01f;
                         }
 
-                        float overlap = (minDist - dist);
-                        float slop = 0.01f;
-                        float resolutionForce = std::max(0.0f, overlap + slop);
+                        glm::vec2 normal = dir / dist;
+                        float overlap = minDist - dist;
 
-                        glm::vec2 separation = (dir / dist) * (resolutionForce * 0.5f);
+                        float totalMass = p1.GetMass() + p2->GetMass();
+                        float ratio1 = p2->GetMass() / totalMass;
+                        float ratio2 = p1.GetMass() / totalMass;
 
-                        p1.SetPosition(p1.GetPosition() + separation);
-                        p2->SetPosition(p2->GetPosition() - separation);
+                        p1.SetPosition(p1.GetPosition() + normal * overlap * ratio1);
+                        p2->SetPosition(p2->GetPosition() - normal * overlap * ratio2);
+
+                        glm::vec2 relativeVelocity = p1.GetVelocity() - p2->GetVelocity();
+
+                        float velocityAlongNormal = glm::dot(relativeVelocity, normal);
+
+                        if (velocityAlongNormal < 0) {
+                            float restitution = 0.5f;
+
+                            float j = -(1.0f + restitution) * velocityAlongNormal;
+                            j /= (1.0f / p1.GetMass()) + (1.0f / p2->GetMass());
+
+                            glm::vec2 impulse = j * normal;
+                            p1.SetVelocity(p1.GetVelocity() + (impulse / p1.GetMass()));
+                            p2->SetVelocity(p2->GetVelocity() - (impulse / p2->GetMass()));
+                        }
                     }
                 }
             }
@@ -138,36 +190,32 @@ void SimulationSystem::AddForce(std::unique_ptr<IForceProvider> force) {
 
 Particle::Properties SimulationSystem::CreateParticleProperties(ParticleType type, const glm::vec2 &position) {
     Particle::Properties properties;
-    ParticleMass mass;
-
+    ParticleMass massScale;
     properties.position = position;
     properties.type = type;
     properties.color = currentColors[type];
 
-    float particleMass = 0.0f;
-
     switch (type) {
         case ParticleType::ParticleType_Electron:
-            particleMass = mass.ELECTRON;
+            properties.mass = massScale.ELECTRON;
+            properties.charge = ParticleCharge().ELECTRON;
+            properties.radius = 0.15f;
             break;
         case ParticleType::ParticleType_Proton:
-            particleMass = mass.PROTON;
+            properties.mass = massScale.PROTON;
+            properties.charge = ParticleCharge().PROTON;
+            properties.radius = 0.5f;
             break;
         case ParticleType::ParticleType_Neutron:
-            particleMass = mass.NEUTRON;
+            properties.mass = massScale.NEUTRON;
+            properties.charge = ParticleCharge().NEUTRON;
+            properties.radius = 0.5f;
             break;
         default:
-            particleMass = 0.1f;
+            properties.mass = 0.1f;
+            properties.charge = ParticleCharge().NEUTRON;
+            properties.radius = 0.1f;
             break;
-    }
-
-    properties.mass = particleMass;
-
-    constexpr float scaleFactor = 0.3f;
-    properties.radius = scaleFactor * std::cbrt(particleMass);
-
-    if (type == ParticleType::ParticleType_Electron) {
-        properties.radius = scaleFactor * 2.5f;
     }
 
     return properties;

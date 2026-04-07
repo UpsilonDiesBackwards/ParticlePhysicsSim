@@ -13,7 +13,10 @@
 #include "backends/imgui_impl_opengl3.h"
 
 #include "../include/io/input.h"
-#include "../include/sim/forces/gravitationalforce.h"
+#include "../include/sim/forces/electromagnetic.h"
+#include "../include/sim/forces/gravitational.h"
+#include "../include/sim/forces/strong.h"
+#include "../include/sim/forces/weak.h"
 #include "glad/glad.h"
 
 Application::Application(int width, int height, const char *title) : window(nullptr), width(width), height(height),
@@ -89,6 +92,9 @@ void Application::Initialise() {
     SetupInputBindings();
 
     simulationSystem.AddForce(std::make_unique<GravitationalForce>());
+    simulationSystem.AddForce(std::make_unique<WeakForce>());
+    simulationSystem.AddForce(std::make_unique<StrongForce>());
+    simulationSystem.AddForce(std::make_unique<ElectromagneticForce>());
 }
 
 void Application::Run() {
@@ -117,8 +123,9 @@ void Application::Run() {
         simulationSystem.Update(0.01667f);
         playState = PlayState_PAUSE;
     } else if (playState == PlayState_PAUSE) {
-
     }
+
+    simulationSystem.ResolveCollisions();
 
     ImGuiIO& io = ImGui::GetIO();
     if (io.WantCaptureMouse) {
@@ -215,7 +222,7 @@ void Application::SetupInputBindings() {
         if (ImGui::GetIO().WantCaptureMouse)
             return;
 
-        if (playState != PlayState_STOP) return;
+        // if (playState != PlayState_STOP) return;
 
         glm::vec2 worldPos = ScreenToWorld(
             inputManager.getMouseX(),

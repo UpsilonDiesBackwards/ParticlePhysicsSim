@@ -29,7 +29,14 @@ public:
         currentColors[ParticleType::ParticleType_Photon] = {0.6f, 0.06f, 0.98f, 1.0f};
     }
 
+    struct SimulationProperties {
+        double const Gn = 1.0f; // Gravitational Constant
+    };
+
+    SimulationProperties properties;
+
     void CreateParticle(ParticleType type, const glm::vec2& position);
+
     void RenderAll(unsigned int program, const glm::mat4 & projection, const glm::mat4& view);
 
     // Main Update loop
