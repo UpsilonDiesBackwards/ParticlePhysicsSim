@@ -39,21 +39,35 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
         if (totalNucleusMass > 0.0f) {
             nucleusCOM /= totalNucleusMass;
             glm::vec2 diff = position - nucleusCOM;
-            float dist = glm::length(diff);
+            float distSq = glm::dot(diff, diff);
+            float dist = std::sqrt(distSq);
 
             if (dist > 0.1f) {
-                float Ke = GET_APP.simulationSystem.properties.Ke;
-                float softening = GET_APP.simulationSystem.properties.Softening;
+                float Ke = properties.Ke;
+                float softening = properties.Softening;
 
-                float effectiveCharge = totalNucleusCharge - (existingElectrons * 0.5f);
-                if (effectiveCharge < 0.5f) effectiveCharge = 0.5f;
+                float netForceMag = (Ke * totalNucleusCharge * std::abs(props.charge)) / (distSq + softening);
 
-                float forceMag = (Ke * effectiveCharge) / (dist * dist + softening);
-                float speed = std::sqrt((forceMag / props.mass) * dist);
+                for (const auto& other : _particles) {
+                    if (other.GetType() == ParticleType::ParticleType_Electron) {
+                        glm::vec2 eDiff = position - other.GetPosition();
+                        float eDistSq = glm::dot(eDiff, eDiff);
+
+                        float eRepulsion = (Ke * 0.1f * 1.0f) / (eDistSq + 0.5f);
+
+                        netForceMag -= eRepulsion;
+                    }
+                }
+
+                if (netForceMag < 0.01f) netForceMag = 0.01f;
+
+                float acceleration = netForceMag / props.mass;
+                float speed = std::sqrt(acceleration * dist);
+
+                speed *= 1.02f;
 
                 glm::vec2 unitDiff = diff / dist;
                 glm::vec2 tangent(-unitDiff.y, unitDiff.x);
-
                 props.velocity = tangent * speed;
             }
         }

@@ -31,8 +31,8 @@ void ElectromagneticForce::Apply(std::vector<Particle>& particles, float dT) {
                                   p2.GetType() == ParticleType::ParticleType_Electron);
 
             if (bothElectrons) {
-                float eSoftening = softening * 20.0f;
-                mag = (Ke * p1.GetCharge() * p2.GetCharge()) / (distSq + eSoftening);
+                float electronKe = Ke * 0.1f;
+                mag = (electronKe * p1.GetCharge() * p2.GetCharge()) / (distSq + 50.f);
             }
             else if (isOppositeCharge) {
                 if (dist < minBohrRadius) {

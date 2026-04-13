@@ -42,7 +42,7 @@ struct ParticleMass {
 struct ParticleCharge {
     float PROTON = 1.0f;
     float ELECTRON = -1.0f;
-    float NEUTRON = 0.0f;
+    float NEUTRON = 1.0f;
 };
 
 #endif //SIMULATION_PARTICLETYPES_H
