@@ -181,6 +181,44 @@ void Interface::Show() {
     }
 
     ImGui::Separator();
+
+    ImGui::Checkbox("Show Trails", &GET_APP.showTrails);
+
+    glm::vec4& protonTrailColor   = GET_APP.simulationSystem.GetParticleTrailColor(ParticleType::ParticleType_Proton);
+    glm::vec4& neutronTrailColor  = GET_APP.simulationSystem.GetParticleTrailColor(ParticleType::ParticleType_Neutron);
+    glm::vec4& electronTrailColor = GET_APP.simulationSystem.GetParticleTrailColor(ParticleType::ParticleType_Electron);
+    glm::vec4& photonTrailColor   = GET_APP.simulationSystem.GetParticleTrailColor(ParticleType::ParticleType_Photon);
+
+    // Proton
+    if (ImGui::ColorEdit4("Proton Trail", (float*)&protonTrailColor)) {
+        GET_APP.simulationSystem.UpdateTrailColors(ParticleType::ParticleType_Proton, protonTrailColor);
+    }
+
+    // Neutron
+    if (ImGui::ColorEdit4("Neutron Trail", (float*)&neutronTrailColor)) {
+        GET_APP.simulationSystem.UpdateTrailColors(ParticleType::ParticleType_Neutron, neutronTrailColor);
+    }
+
+    // Electron
+    if (ImGui::ColorEdit4("Electron Trail", (float*)&electronTrailColor)) {
+        GET_APP.simulationSystem.UpdateTrailColors(ParticleType::ParticleType_Electron, electronTrailColor);
+    }
+
+    // Photon
+    if (ImGui::ColorEdit4("Photon Trail", (float*)&photonTrailColor)) {
+        GET_APP.simulationSystem.UpdateTrailColors(ParticleType::ParticleType_Photon, photonTrailColor);
+    }
+
+    if (ImGui::Button("Reset Particle Colors")) {
+        GET_APP.simulationSystem.ResetParticleColors();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reset Trail Colors")) {
+        GET_APP.simulationSystem.ResetTrailColors();
+    }
+
+
+    ImGui::Separator();
     ImGui::Text("Physics Settings");
 
     if (ImGui::InputInt("Collision Steps", &GET_APP.collisionResolutionCount)) {

@@ -22,6 +22,12 @@ struct ParticleColor {
     glm::vec4 PHOTON = { 0.6f, 0.06f, 0.98f, 1.0f };
 };
 
+struct ParticleTrailColor {
+    glm::vec4 PROTON = { 0.98f, 0.035f, 0.39f, 1.0f };
+    glm::vec4 NEUTRON = { 0.01f, 0.109f, 0.42f, 1.0f };
+    glm::vec4 ELECTRON = { 0.98f, 0.78f, 0.05f, 1.0f };
+    glm::vec4 PHOTON = { 0.49f, 0.05f, 0.98f, 1.0f };
+};
 
 /*
  * Because these are horrendously small numbers, small enough to cause issues, we want to calculate, and use

@@ -57,6 +57,7 @@ public:
     Interface simInterface;
 
     bool captureMouse = false;
+    bool showTrails = true;
 
     int collisionResolutionCount = 1;
 

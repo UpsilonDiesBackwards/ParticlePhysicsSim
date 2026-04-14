@@ -110,9 +110,13 @@ void SimulationSystem::RenderAll(unsigned int program, const glm::mat4& projecti
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-    for (const auto& particle : _particles) {
-        if (particle.GetType() == ParticleType::ParticleType_Electron) {
-            particle.RenderElectronTrailPath(shader->ID);
+    if (GET_APP.showTrails) {
+        for (const auto& particle : _particles) {
+            particle.RenderTrail(shader->ID);
+        }
+    } else {
+        for (auto& particle : _particles) {
+            particle.ClearTrail();
         }
     }
 
@@ -218,12 +222,51 @@ void SimulationSystem::AddForce(std::unique_ptr<IForceProvider> force) {
     _forces.push_back(std::move(force));
 }
 
+void SimulationSystem::ResetParticleColors() {
+    for (Particle& p : _particles ) {
+        switch (p.GetType()) {
+            case ParticleType::ParticleType_Proton:
+                p.SetColor(GetParticleColor(ParticleType::ParticleType_Proton));
+                break;
+            case ParticleType::ParticleType_Neutron:
+                p.SetColor(GetParticleColor(ParticleType::ParticleType_Neutron));
+                break;
+            case ParticleType::ParticleType_Electron:
+                p.SetColor(GetParticleColor(ParticleType::ParticleType_Electron));
+                break;
+            case ParticleType::ParticleType_Photon:
+                p.SetColor(GetParticleColor(ParticleType::ParticleType_Photon));
+                break;
+        }
+    }
+}
+
+void SimulationSystem::ResetTrailColors() {
+    for (Particle& p : _particles ) {
+        switch (p.GetType()) {
+            case ParticleType::ParticleType_Proton:
+                p.SetTrailColor(GetParticleTrailColor(ParticleType::ParticleType_Proton));
+                break;
+            case ParticleType::ParticleType_Neutron:
+                p.SetTrailColor(GetParticleTrailColor(ParticleType::ParticleType_Neutron));
+                break;
+            case ParticleType::ParticleType_Electron:
+                p.SetTrailColor(GetParticleTrailColor(ParticleType::ParticleType_Electron));
+                break;
+            case ParticleType::ParticleType_Photon:
+                p.SetTrailColor(GetParticleTrailColor(ParticleType::ParticleType_Photon));
+                break;
+        }
+    }
+}
+
 Particle::Properties SimulationSystem::CreateParticleProperties(ParticleType type, const glm::vec2 &position) {
     Particle::Properties properties;
     ParticleMass massScale;
     properties.position = position;
     properties.type = type;
     properties.color = currentColors[type];
+    properties.trailColor = currentTrailColors[type];
 
     switch (type) {
         case ParticleType::ParticleType_Electron:

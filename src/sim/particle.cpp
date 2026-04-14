@@ -120,20 +120,18 @@ void Particle::Integrate(float dT) {
     _properties.position += _properties.velocity * dT;
     _properties.acceleration = glm::vec2(0.0f);
 
-    if (_properties.type == ParticleType::ParticleType_Electron) {
-        _trail.push_back(_properties.position);
-        if (_trail.size() > MAX_TRAIL_POINTS) {
-            _trail.erase(_trail.begin());
-        }
+    _trail.push_back(_properties.position);
+    if (_trail.size() > MAX_TRAIL_POINTS) {
+        _trail.erase(_trail.begin());
     }
 }
 
-void Particle::RenderElectronTrailPath(unsigned int program) const {
+void Particle::RenderTrail(unsigned int program) const {
     if (_trail.size() < 2) return;
 
     glUseProgram(program);
 
-    glm::vec4 trailColor = _properties.color;
+    glm::vec4 trailColor = _properties.trailColor;
     trailColor.a = 0.5f;
     glUniform4fv(glGetUniformLocation(program, "uColor"), 1, &trailColor[0]);
 
@@ -144,4 +142,8 @@ void Particle::RenderElectronTrailPath(unsigned int program) const {
 
     glBindVertexArray(_trailVao);
     glDrawArrays(GL_LINE_STRIP, 0, (GLsizei)_trail.size());
+}
+
+void Particle::ClearTrail() {
+    _trail.clear();
 }

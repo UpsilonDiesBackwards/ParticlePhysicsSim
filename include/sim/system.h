@@ -27,6 +27,11 @@ public:
         currentColors[ParticleType::ParticleType_Neutron] = {0.06f, 0.43f, 0.98f, 1.0f};
         currentColors[ParticleType::ParticleType_Electron] = {0.98f, 0.89f, 0.06f, 1.0f};
         currentColors[ParticleType::ParticleType_Photon] = {0.6f, 0.06f, 0.98f, 1.0f};
+
+        currentTrailColors[ParticleType::ParticleType_Proton]   = GetParticleTrailColor(ParticleType::ParticleType_Proton);
+        currentTrailColors[ParticleType::ParticleType_Neutron]  = GetParticleTrailColor(ParticleType::ParticleType_Neutron);
+        currentTrailColors[ParticleType::ParticleType_Electron] = GetParticleTrailColor(ParticleType::ParticleType_Electron);
+        currentTrailColors[ParticleType::ParticleType_Photon]   = GetParticleTrailColor(ParticleType::ParticleType_Photon);
     }
 
     struct SimulationProperties {
@@ -57,6 +62,17 @@ public:
         }
     }
 
+
+    glm::vec4& GetParticleTrailColor(ParticleType type) {
+        switch (type) {
+            case ParticleType::ParticleType_Proton:   return particleTrailColor.PROTON;
+            case ParticleType::ParticleType_Neutron:  return particleTrailColor.NEUTRON;
+            case ParticleType::ParticleType_Electron: return particleTrailColor.ELECTRON;
+            case ParticleType::ParticleType_Photon:   return particleTrailColor.PHOTON;
+            default: return particleTrailColor.PROTON;
+        }
+    }
+
     void UpdateParticleColors(ParticleType type, const glm::vec4& color) {
         for (auto& particle : _particles) {
             if (particle.GetType() == type) {
@@ -67,12 +83,25 @@ public:
         currentColors[type] = color;
     }
 
+    void UpdateTrailColors(ParticleType type, const glm::vec4& color) {
+        for (auto& particle : _particles) {
+            if (particle.GetType() == type) {
+                particle.SetTrailColor(color);
+            }
+        }
+
+        currentTrailColors[type] = color;
+    }
+
     void ClearAllParticles() { _particles.clear(); }
 
     void ResolveCollisions();
     void UpdateGrid();
 
     void AddForce(std::unique_ptr<IForceProvider> force);
+
+    void ResetParticleColors();
+    void ResetTrailColors();
 
     Shader* shader;
 
@@ -81,10 +110,12 @@ private:
     std::vector<std::unique_ptr<IForceProvider>> _forces;
 
     std::unordered_map<ParticleType, glm::vec4> currentColors;
+    std::unordered_map<ParticleType, glm::vec4> currentTrailColors;
 
     Particle::Properties CreateParticleProperties(ParticleType type, const glm::vec2& position);
 
     ParticleColor particleColor;
+    ParticleTrailColor particleTrailColor;
 
     struct SpatialGrid {
         float cellSize;

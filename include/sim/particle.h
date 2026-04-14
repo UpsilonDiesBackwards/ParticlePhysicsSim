@@ -25,6 +25,7 @@ public:
         glm::vec2 acceleration = { 0.0f, 0.0f };
 
         glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glm::vec4 trailColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
         ParticleType type = ParticleType::ParticleType_Neutron;
         float charge = ParticleCharge().NEUTRON;
@@ -37,6 +38,12 @@ public:
 
     void SetColor(const glm::vec4& color) { _properties.color = color; }
     const glm::vec4& GetColor() const { return _properties.color; }
+
+    void SetTrailColor(const glm::vec4& color) { _properties.trailColor = color; }
+    const glm::vec4& GetTrailColor() const { return _properties.trailColor; }
+
+    void ResetColor() { _properties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); }
+    void ResetTrailColor() { _properties.trailColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); }
 
     ParticleType GetType() const { return _properties.type; }
 
@@ -64,7 +71,8 @@ public:
     void AddAcceleration(const glm::vec2& acc);
     void Integrate(float dT);
 
-    void RenderElectronTrailPath(unsigned int program) const;
+    void RenderTrail(unsigned int program) const;
+    void ClearTrail();
 
 private:
     Properties _properties;
