@@ -13,6 +13,7 @@
 #include "backends/imgui_impl_opengl3.h"
 
 #include "../include/io/input.h"
+#include "../include/io/file/nubasereader.h"
 #include "../include/sim/forces/electromagnetic.h"
 #include "../include/sim/forces/gravitational.h"
 #include "../include/sim/forces/strong.h"
@@ -95,6 +96,20 @@ void Application::Initialise() {
     simulationSystem.AddForce(std::make_unique<WeakForce>());
     simulationSystem.AddForce(std::make_unique<StrongForce>());
     simulationSystem.AddForce(std::make_unique<ElectromagneticForce>());
+
+    nubase.ReadNubaseFile(GetExecutablePath() + "/../res/nubtab03.asc");
+
+    auto& elementGroups = simInterface.elementGroups;
+    auto& elementSymbols = simInterface.elementSymbols;
+    for (size_t i = 0; i < atomTemplates.size(); ++i) {
+        std::string symbol = atomTemplates[i].name;
+        symbol.erase(std::remove_if(symbol.begin(), symbol.end(), ::isdigit), symbol.end());
+
+        if (elementGroups.find(symbol) == elementGroups.end()) {
+            elementSymbols.push_back(symbol);
+        }
+        elementGroups[symbol].push_back(i);
+    }
 }
 
 void Application::Run() {
@@ -218,19 +233,26 @@ void Application::SetupInputBindings() {
         }
     });
 
+    input.BindKey(GLFW_KEY_5, KEY_DOWN, [this]() {
+        spawnAtomMode = !spawnAtomMode;
+        std::cout << "Atom Mode: " << (spawnAtomMode ? "ON" : "OFF") << std::endl;
+    });
+
     input.BindMouseButton(GLFW_MOUSE_BUTTON_1, MOUSE_UP, [this]() {
-        if (ImGui::GetIO().WantCaptureMouse)
-            return;
+        if (ImGui::GetIO().WantCaptureMouse) return;
 
-        // if (playState != PlayState_STOP) return;
+        glm::vec2 worldPos = ScreenToWorld(inputManager.getMouseX(), inputManager.getMouseY());
 
-        glm::vec2 worldPos = ScreenToWorld(
-            inputManager.getMouseX(),
-            inputManager.getMouseY()
-        );
-
-        simulationSystem.UpdateGrid();
-        simulationSystem.CreateParticle(targetParticleType, worldPos);
+        if (spawnAtomMode) {
+            simulationSystem.CreateAtom({
+                targetAtomTemplate.name,
+                targetAtomTemplate.protons,
+                targetAtomTemplate.neutrons,
+                targetAtomTemplate.electrons, 1}, worldPos);
+        } else {
+            simulationSystem.UpdateGrid();
+            simulationSystem.CreateParticle(targetParticleType, worldPos);
+        }
     });
 
     input.BindKey(GLFW_KEY_LEFT_SHIFT, KEY_DOWN, [this]() {

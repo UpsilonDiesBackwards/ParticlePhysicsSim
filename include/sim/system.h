@@ -13,6 +13,7 @@
 #include <memory>
 #include <glm/gtx/norm.hpp>
 
+#include "atomtemplate.h"
 #include "particle.h"
 #include "particletypes.h"
 
@@ -46,6 +47,7 @@ public:
     SimulationProperties properties;
 
     void CreateParticle(ParticleType type, const glm::vec2& position);
+    void CreateAtom(AtomTemplate aTemp, const glm::vec2& position);
 
     void RenderAll(unsigned int program, const glm::mat4 & projection, const glm::mat4& view);
 

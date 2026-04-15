@@ -5,6 +5,24 @@
 #include "../../../include/sim/forces/weak.h"
 #include "../../../include/application.h"
 
+#include <random>
+
+static std::mt19937 rng(std::random_device{}());
+static std::uniform_real_distribution<float> dist(-3.0f, 1.0f);
+
+float randRange(float min, float max) {
+    return min + ((float)rand() / RAND_MAX) * (max - min);
+}
+
+float randomComponent() {
+    if ((float)rand() / RAND_MAX < 0.8f)
+        return randRange(-2.0f, -0.8f);
+    else
+        return randRange(0.8f, 2.0f);
+}
+
+glm::vec2 offset(randomComponent(), randomComponent());
+
 void WeakForce::Apply(std::vector<Particle> &particles, float dT) {
     for (int i = particles.size() - 1; i >= 0; --i) {
         auto &p = particles[i];
@@ -32,7 +50,12 @@ void WeakForce::Apply(std::vector<Particle> &particles, float dT) {
 
                     p.Transform(ParticleType::ParticleType_Proton);
 
-                    GET_APP.simulationSystem.CreateParticle(ParticleType::ParticleType_Electron, pos);
+                    glm::vec2 offset(dist(rng), dist(rng));
+
+                    GET_APP.simulationSystem.CreateParticle(
+                        ParticleType::ParticleType_Electron,
+                        pos + offset
+                    );
                 }
             }
         }

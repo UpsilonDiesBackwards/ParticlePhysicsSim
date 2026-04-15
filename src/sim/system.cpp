@@ -18,53 +18,33 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
     if (type == ParticleType::ParticleType_Electron && !_particles.empty()) {
         glm::vec2 nucleusCOM(0.0f);
         float totalNucleusMass = 0.0f;
-        float totalNucleusCharge = 0.0f;
-        int existingElectrons = 0;
-
-        for (const auto& p : _particles) {
-            if (p.GetType() == ParticleType::ParticleType_Proton) totalNucleusCharge += p.GetCharge();
-            if (p.GetType() == ParticleType::ParticleType_Electron) existingElectrons++;
-        }
+        float netCharge = 0.0f;
 
         for (const auto& p : _particles) {
             if (p.GetType() == ParticleType::ParticleType_Proton || p.GetType() == ParticleType::ParticleType_Neutron) {
                 nucleusCOM += p.GetPosition() * p.GetMass();
                 totalNucleusMass += p.GetMass();
-                if (p.GetType() == ParticleType::ParticleType_Proton) {
-                    totalNucleusCharge += p.GetCharge();
-                }
             }
+            netCharge += p.GetCharge();
         }
 
         if (totalNucleusMass > 0.0f) {
             nucleusCOM /= totalNucleusMass;
             glm::vec2 diff = position - nucleusCOM;
-            float distSq = glm::dot(diff, diff);
-            float dist = std::sqrt(distSq);
+            float dist = glm::length(diff);
 
-            if (dist > 0.1f) {
+            if (dist > 0.5f) {
                 float Ke = properties.Ke;
                 float softening = properties.Softening;
 
-                float netForceMag = (Ke * totalNucleusCharge * std::abs(props.charge)) / (distSq + softening);
+                float forceMag = (Ke * std::abs(netCharge) * std::abs(props.charge)) / (dist * dist + softening);
 
-                for (const auto& other : _particles) {
-                    if (other.GetType() == ParticleType::ParticleType_Electron) {
-                        glm::vec2 eDiff = position - other.GetPosition();
-                        float eDistSq = glm::dot(eDiff, eDiff);
+                float speed = std::sqrt((forceMag * dist) / props.mass);
 
-                        float eRepulsion = (Ke * 0.1f * 1.0f) / (eDistSq + 0.5f);
+                float maxSpeed = 50.0f;
+                if (speed > maxSpeed) speed = maxSpeed;
 
-                        netForceMag -= eRepulsion;
-                    }
-                }
-
-                if (netForceMag < 0.01f) netForceMag = 0.01f;
-
-                float acceleration = netForceMag / props.mass;
-                float speed = std::sqrt(acceleration * dist);
-
-                speed *= 1.02f;
+                speed *= 1.01f;
 
                 glm::vec2 unitDiff = diff / dist;
                 glm::vec2 tangent(-unitDiff.y, unitDiff.x);
@@ -77,13 +57,54 @@ void SimulationSystem::CreateParticle(ParticleType type, const glm::vec2 &positi
     particle.CreateMesh();
     _particles.push_back(particle);
 
-    // Update UI counters
     switch (props.type) {
         case ParticleType::ParticleType_Proton:   GET_APP.simInterface.protonCount++;   break;
         case ParticleType::ParticleType_Neutron:  GET_APP.simInterface.neutronCount++;  break;
         case ParticleType::ParticleType_Electron: GET_APP.simInterface.electronCount++; break;
         case ParticleType::ParticleType_Photon:   GET_APP.simInterface.photonCount++;   break;
         default: break;
+    }
+}
+
+void SimulationSystem::CreateAtom(AtomTemplate aTemp, const glm::vec2 &position) {
+    for (int i = 0; i < (aTemp.protons + aTemp.neutrons); ++i) {
+        ParticleType type = (i < aTemp.protons) ?
+                             ParticleType::ParticleType_Proton :
+                             ParticleType::ParticleType_Neutron;
+
+        glm::vec2 offset = glm::vec2(
+            ((rand() % 100) / 100.0f - 0.5f) * aTemp.nucleusDensity,
+            ((rand() % 100) / 100.0f - 0.5f) * aTemp.nucleusDensity
+        );
+        CreateParticle(type, position + offset);
+    }
+
+    int electronsSpawned = 0;
+    int shellNum = 1;
+    float phase = 0.0f;
+
+    while (electronsSpawned < aTemp.electrons) {
+        int maxInShell = 2 * (shellNum * shellNum);
+        int remaining = aTemp.electrons - electronsSpawned;
+        int countInThisShell = std::min(maxInShell, remaining);
+
+        float rawRadius = (std::pow(shellNum, 2) / std::sqrt((float)aTemp.protons)) * aTemp.baseOrbitRadius;
+        float nucleusEstimatedRadius = std::pow((float)(aTemp.protons + aTemp.neutrons), 0.33f) * aTemp.nucleusDensity;
+        float padding = 100.0f;
+
+        float shellRadius = nucleusEstimatedRadius + padding + rawRadius;
+
+        for (int i = 0; i < countInThisShell; ++i) {
+            float angle = (i / (float)countInThisShell) * 2.0f * M_PI;
+
+            glm::vec2 orbitalPos = position + glm::vec2(cos(angle + phase), sin(angle + phase)) * shellRadius;
+
+            CreateParticle(ParticleType::ParticleType_Electron, orbitalPos);
+            electronsSpawned++;
+        }
+
+        shellNum++;
+        phase += 0.5f;
     }
 }
 

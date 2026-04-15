@@ -4,8 +4,8 @@
 
 #ifndef SIMULATION_WEAK_H
 #define SIMULATION_WEAK_H
-#include "forceprovider.h"
 
+#include "forceprovider.h"
 
 class WeakForce : public IForceProvider {
     void Apply(std::vector<Particle> &particles, float dT) override;

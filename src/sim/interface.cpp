@@ -28,6 +28,8 @@ const char* GetPlayState(PlayState state) {
     }
 }
 
+std::string Interface::selectedSymbol = "H";
+
 void Interface::Show() {
     ImGui::SetNextWindowSize(ImVec2(320, 560));
     ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoNavInputs);
@@ -51,6 +53,43 @@ void Interface::Show() {
         }
         ImGui::EndCombo();
     }
+
+    ImGui::Checkbox("Spawn Atom Mode", &GET_APP.spawnAtomMode);
+
+    if (ImGui::BeginCombo("Element", selectedSymbol.c_str())) {
+        for (const auto& sym : elementSymbols) {
+            std::string label = sym.empty() ? "???" : sym;
+            std::string uniqueID = label + "##" + sym;
+
+            if (ImGui::Selectable(uniqueID.c_str(), selectedSymbol == sym)) {
+                selectedSymbol = sym;
+                GET_APP.targetAtomTemplate = GET_APP.atomTemplates[elementGroups[selectedSymbol][0]];
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    if (ImGui::BeginCombo("Isotope", GET_APP.targetAtomTemplate.name.c_str())) {
+        const auto& indices = elementGroups[selectedSymbol];
+        for (size_t idx : indices) {
+            const auto& atom = GET_APP.atomTemplates[idx];
+
+            std::string uniqueID = atom.name + "##" + std::to_string(idx);
+
+            bool isSelected = (GET_APP.targetAtomTemplate.name == atom.name &&
+                               GET_APP.targetAtomTemplate.protons == atom.protons);
+
+            if (ImGui::Selectable(uniqueID.c_str(), isSelected)) {
+                GET_APP.targetAtomTemplate = atom;
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Text("Selection: %s (P: %d, N: %d)",
+                GET_APP.targetAtomTemplate.name.c_str(),
+                GET_APP.targetAtomTemplate.protons,
+                GET_APP.targetAtomTemplate.neutrons);
 
     if (ImGui::Button("Clear all Particles")) {
         GET_APP.GetInstance().simulationSystem.ClearAllParticles();

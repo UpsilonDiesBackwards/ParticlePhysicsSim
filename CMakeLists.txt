@@ -78,6 +78,9 @@ add_executable(Simulation
         include/sim/forces/weak.h
         src/sim/forces/electromagnetic.cpp
         include/sim/forces/electromagnetic.h
+        include/sim/atomtemplate.h
+        include/io/file/nubasereader.h
+        src/io/file/nubasereader.cpp
 )
 
 target_include_directories(Simulation PUBLIC

@@ -11,6 +11,7 @@
 #include "viewport.h"
 #include "io/input.h"
 #include "io/inputmanager.h"
+#include "io/file/nubasereader.h"
 #include "sim/interface.h"
 #include "sim/system.h"
 
@@ -52,12 +53,19 @@ public:
     Time time;
 
     ParticleType targetParticleType = ParticleType::ParticleType_Proton;
+    AtomTemplate targetAtomTemplate;
 
     SimulationSystem simulationSystem;
     Interface simInterface;
 
+    NubaseReader nubase;
+
+    std::vector<AtomTemplate> atomTemplates;
+
     bool captureMouse = false;
     bool showTrails = true;
+
+    bool spawnAtomMode = false;
 
     int collisionResolutionCount = 1;
 
