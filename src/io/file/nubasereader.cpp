@@ -57,7 +57,7 @@ void NubaseReader::ReadNubaseFile(std::string fileName) {
                 atom.baseOrbitRadius = 0.0f;
             }
 
-            atom.nucleusDensity = 0.5f + (0.1f * std::log10((float)massNum + 1));
+            atom.nucleusDensity = 1.0f + (0.1f * std::log10((float)massNum + 1));
 
             GET_APP.atomTemplates.push_back(atom);
         } catch (const std::exception& e) {
